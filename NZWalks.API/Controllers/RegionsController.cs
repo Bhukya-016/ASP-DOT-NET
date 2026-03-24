@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using NZWalks.API.CustomActionFilters;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
@@ -47,20 +48,22 @@ namespace NZWalks.API.Controllers
             return Ok(mapper.Map<RegionDto>(regionDomain));
         }
 
+
         // POST: api/regions
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> Create(
             [FromBody] AddRegionRequestDto addRegionRequestDto)
         {
-            // Map DTO → Domain
+            // Map / Convert DTO to Domain Model
             var regionDomainModel =
-                mapper.Map<Region>(addRegionRequestDto);
+                mapper.Map<Models.Domain.Region>(addRegionRequestDto);
 
-            // Create Region
+            // Use Domain Model to create Region
             regionDomainModel =
                 await regionRepository.CreateAsync(regionDomainModel);
 
-            // Map Domain → DTO
+            // Map Domain Model back to DTO
             var regionDto =
                 mapper.Map<RegionDto>(regionDomainModel);
 
@@ -70,17 +73,21 @@ namespace NZWalks.API.Controllers
                 regionDto);
         }
 
+
+
         // PUT: api/regions/{id}
         [HttpPut]
         [Route("{id:Guid}")]
+        [ValidateModel]
         public async Task<IActionResult> Update(
             [FromRoute] Guid id,
             [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
         {
-            // Map DTO → Domain
+            // Map DTO to Domain Model
             var regionDomainModel =
-                mapper.Map<Region>(updateRegionRequestDto);
+                mapper.Map<Models.Domain.Region>(updateRegionRequestDto);
 
+            // Update region
             regionDomainModel =
                 await regionRepository.UpdateAsync(id, regionDomainModel);
 
@@ -91,6 +98,7 @@ namespace NZWalks.API.Controllers
 
             return Ok(mapper.Map<RegionDto>(regionDomainModel));
         }
+
 
         // DELETE: api/regions/{id}
         [HttpDelete]
