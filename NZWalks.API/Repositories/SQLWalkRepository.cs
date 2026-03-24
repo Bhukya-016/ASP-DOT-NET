@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 
@@ -38,12 +40,51 @@ namespace NZWalks.API.Repositories
         }
 
 
-        public async Task<List<Walk>> GetAllAsync()
+        public async Task<List<Walk>> GetAllAsync(
+     string? filterOn = null,
+     string? filterQuery = null, string? sortBy=null, bool isAscending=true)
         {
-            return await dbContext.Walks
-                .Include(w => w.Difficulty)
-                .Include(w => w.Region)
-                .ToListAsync();
+            var walks = dbContext.Walks
+                .Include("Difficulty")
+                .Include("Region")
+                .AsQueryable();
+
+            // Filtering
+            if (string.IsNullOrWhiteSpace(filterOn) == false &&
+                string.IsNullOrWhiteSpace(filterQuery) == false)
+            {
+                if (filterOn.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = walks.Where(x => x.Name.Contains(filterQuery));
+                }
+            }
+
+            // Sorting
+            if (string.IsNullOrWhiteSpace(sortBy) == false)
+            {
+                if (sortBy.Equals("Name", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = isAscending
+                        ? walks.OrderBy(x => x.Name)
+                        : walks.OrderByDescending(x => x.Name);
+                }
+                else if (sortBy.Equals("Length", StringComparison.OrdinalIgnoreCase))
+                {
+                    walks = isAscending
+                        ? walks.OrderBy(x => x.LengthInKm)
+                        : walks.OrderByDescending(x => x.LengthInKm);
+                }
+            }
+
+
+
+
+            return await walks.ToListAsync();
+
+            // return await dbContext.Walks
+            //     .Include("Difficulty")
+            //     .Include("Region")
+            //     .ToListAsync();
         }
 
 
@@ -56,10 +97,7 @@ namespace NZWalks.API.Repositories
                 .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public Task<List<Walk>> GettAllAsync()
-        {
-            throw new NotImplementedException();
-        }
+        // Note: GetAllAsync is implemented with filtering and sorting above.
 
         // UPDATE
         public async Task<Walk?> UpdateAsync(Guid id, Walk walk)
