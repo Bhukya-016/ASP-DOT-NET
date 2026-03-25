@@ -2,46 +2,77 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NZWalks.API.CustomActionFilters;
+using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
+using System.Text.Json;
 
 namespace NZWalks.API.Controllers
 {
+
+    // https://localhost:1234/api/regions
     [Route("api/[controller]")]
     [ApiController]
- 
     public class RegionsController : ControllerBase
     {
+        private readonly NZWalksDbContext dbContext;
         private readonly IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger;
 
         public RegionsController(
+            NZWalksDbContext dbContext,
             IRegionRepository regionRepository,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<RegionsController> logger)
         {
+            this.dbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
-        // GET: api/regions
+
+
+
+        // GET ALL REGIONS
+        // GET: https://localhost:{portnumber}/api/regions
         [HttpGet]
-        [Authorize(Roles ="Reader")]
+        [Authorize(Roles = "Reader")]
         public async Task<IActionResult> GetAll()
         {
-            var regionsDomain = await regionRepository.GetAllAsync();
+            try
+            {
+                throw new Exception("This is a custom exception");
 
-            var regionsDto = mapper.Map<List<RegionDto>>(regionsDomain);
+                // Get Data From Database – Domain models
+                var regionsDomain = await regionRepository.GetAllAsync();
 
-            return Ok(regionsDto);
+                // Return DTOs
+                logger.LogInformation(
+                    $"Finished GetAllRegions request with data: {JsonSerializer.Serialize(regionsDomain)}");
+
+                return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+
+                throw;
+            }
         }
 
-        // GET: api/regions/{id}
+
+
+        // GET SINGLE REGION (Get Region By ID)
+        // GET: https://localhost:{portnumber}/api/regions/{id}
         [HttpGet]
         [Route("{id:Guid}")]
-        [Authorize(Roles = "Reader")]
+        //[Authorize(Roles = "Reader")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
         {
+            // Get Region Domain Model From Database
             var regionDomain = await regionRepository.GetByIdAsync(id);
 
             if (regionDomain == null)
@@ -49,9 +80,9 @@ namespace NZWalks.API.Controllers
                 return NotFound();
             }
 
+            // Map/Convert Region Domain Model to Region DTO
             return Ok(mapper.Map<RegionDto>(regionDomain));
         }
-
 
         // POST: api/regions
         [HttpPost]
