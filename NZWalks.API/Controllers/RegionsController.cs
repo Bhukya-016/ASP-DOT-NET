@@ -35,33 +35,19 @@ namespace NZWalks.API.Controllers
 
 
 
-
         // GET ALL REGIONS
         // GET: https://localhost:{portnumber}/api/regions
         [HttpGet]
-        [Authorize(Roles = "Reader")]
+        //[Authorize(Roles = "Reader")]
         public async Task<IActionResult> GetAll()
         {
-            try
-            {
-                throw new Exception("This is a custom exception");
+            // Get Data From Database – Domain models
+            var regionsDomain = await regionRepository.GetAllAsync();
 
-                // Get Data From Database – Domain models
-                var regionsDomain = await regionRepository.GetAllAsync();
-
-                // Return DTOs
-                logger.LogInformation(
-                    $"Finished GetAllRegions request with data: {JsonSerializer.Serialize(regionsDomain)}");
-
-                return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, ex.Message);
-
-                throw;
-            }
+            // Return DTOs
+            return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
         }
+
 
 
 
@@ -87,7 +73,7 @@ namespace NZWalks.API.Controllers
         // POST: api/regions
         [HttpPost]
         [ValidateModel]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         public async Task<IActionResult> Create(
             [FromBody] AddRegionRequestDto addRegionRequestDto)
         {
@@ -115,7 +101,7 @@ namespace NZWalks.API.Controllers
         [HttpPut]
         [Route("{id:Guid}")]
         [ValidateModel]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         public async Task<IActionResult> Update(
             [FromRoute] Guid id,
             [FromBody] UpdateRegionRequestDto updateRegionRequestDto)
@@ -140,7 +126,7 @@ namespace NZWalks.API.Controllers
         // DELETE: api/regions/{id}
         [HttpDelete]
         [Route("{id:Guid}")]
-        [Authorize(Roles = "Writer")]
+        //[Authorize(Roles = "Writer")]
         public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             var regionDomainModel =
